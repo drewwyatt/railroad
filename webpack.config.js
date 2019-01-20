@@ -31,7 +31,7 @@ module.exports = {
   plugins: [
     new CleanWebpackPlugin('dist'),
     new ForkTsCheckerWebpackPlugin(),
-    new HtmlWebpackPlugin({ title: package.name }),
+    new HtmlWebpackPlugin({ title: package.name, template: 'src/index.html' }),
     new CopyWebpackPlugin([{ from: 'public' }]),
   ]
 };
