@@ -81,3 +81,4 @@ typings/
 
 .DS_Store
 dist
+.vscode
