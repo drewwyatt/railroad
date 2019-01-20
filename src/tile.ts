@@ -1,4 +1,4 @@
-import { Texture, SCALE_MODES, Sprite, interaction } from 'pixi.js';
+import { Texture, SCALE_MODES, Sprite, interaction } from 'pixi.js'
 
 class Tile {
   sprite: Sprite
@@ -14,7 +14,7 @@ class Tile {
     sprite.interactive = true
 
     // the hand cursor appears when you hover with your mouse
-    sprite.buttonMode = true;
+    sprite.buttonMode = true
 
     // anchor point is in center
     sprite.anchor.set(0.5)
