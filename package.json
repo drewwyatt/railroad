@@ -5,7 +5,9 @@
   "scripts": {
     "build:js": "webpack --mode=production",
     "build:types": "tsc --emitDeclarationOnly",
-    "build": "npm run build:types && npm run build:js",
+    "build": "npm run format:validate && npm run build:types && npm run build:js",
+    "format": "prettier src/** --write",
+    "format:validate": "prettier src/** --check",
     "start": "webpack-dev-server --open",
     "type-check:watch": "npm run type-check -- --watch",
     "type-check": "tsc --noEmit"
