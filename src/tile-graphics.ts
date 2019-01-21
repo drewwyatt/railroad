@@ -1,5 +1,5 @@
 import { Graphics, Point } from 'pixi.js'
-import { TileModel, RoadType } from './tile-model'
+import { TileModel, RoadType, RoadAxis } from './tile-model'
 
 enum RoadSide {
   Top,
@@ -157,6 +157,7 @@ class TileGraphics {
         )
         break
     }
+    this.drawRoadDashes(graphics, side)
   }
 
   private curriedDrawCarRoadSegment = (tile: TileModel, graphics: Graphics) => (
@@ -219,6 +220,34 @@ class TileGraphics {
     }
   }
 
+  private drawRoadDashes = (graphics: Graphics, side: RoadSide) => {
+    const axis =
+      side == RoadSide.Left || side == RoadSide.Right
+        ? RoadAxis.LeftRight
+        : RoadAxis.TopBottom
+
+    const mirrorX = side == RoadSide.Right
+    const mirrorY = side == RoadSide.Bottom
+    const makePoint = this.curriedMakePoint(mirrorX, mirrorY, axis)
+    const midTile = this.tileWidth / 2
+
+    const start = makePoint(0, midTile)
+    graphics.moveTo(start.x, start.y)
+
+    const dashLength = 10
+    let currentX = 0
+    graphics.lineStyle(2, 0x000000, 1.0)
+    while (currentX < midTile) {
+      currentX += dashLength
+      let nextPoint = makePoint(currentX, midTile)
+      graphics.lineTo(nextPoint.x, nextPoint.y)
+      currentX += dashLength
+      nextPoint = makePoint(currentX, midTile)
+      graphics.moveTo(nextPoint.x, nextPoint.y)
+    }
+    graphics.lineStyle(4, 0x000000, 1.0)
+  }
+
   private curriedDrawTrainRoad = (tile: TileModel, graphics: Graphics) => (
     side: RoadSide // the road side to draw
   ) => {
@@ -258,6 +287,34 @@ class TileGraphics {
       const end = makePoint(xPos, this.tileWidth / 2)
       graphics.lineTo(end.x, end.y)
     }
+
+    this.drawTrainDashes(graphics, side)
+  }
+
+  private drawTrainDashes = (graphics: Graphics, side: RoadSide) => {
+    const axis =
+      side == RoadSide.Left || side == RoadSide.Right
+        ? RoadAxis.LeftRight
+        : RoadAxis.TopBottom
+
+    const mirrorX = side == RoadSide.Right
+    const mirrorY = side == RoadSide.Bottom
+    const makePoint = this.curriedMakePoint(mirrorX, mirrorY, axis)
+    const midTile = this.tileWidth / 2
+
+    const spacing = 14
+    const dashLength = 20
+    let currentX = spacing
+
+    graphics.lineStyle(2, 0x000000, 1.0)
+    while (currentX < midTile - this.roadWidth / 2) {
+      let point = makePoint(currentX, midTile - dashLength / 2)
+      graphics.moveTo(point.x, point.y)
+      point = makePoint(currentX, midTile + dashLength / 2)
+      graphics.lineTo(point.x, point.y)
+      currentX += spacing
+    }
+    graphics.lineStyle(4, 0x000000, 1.0)
   }
 
   private curriedMakePoint = (
@@ -404,11 +461,6 @@ class TileGraphics {
       oppositeAdjacentType == RoadType.Car
     )
   }
-}
-
-enum RoadAxis {
-  LeftRight,
-  TopBottom
 }
 
 export default TileGraphics

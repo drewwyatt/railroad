@@ -13,7 +13,7 @@ class Tile {
   private isDragging: boolean = false
 
   constructor() {
-    const model = makeTileModel(9)
+    const model = makeTileModel(6)
     const tileGraphics = new TileGraphics(200, 32)
     const tileObject = tileGraphics.make(model)
 
