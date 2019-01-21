@@ -68,6 +68,7 @@ class TileModel {
     const drawTrainRoad = this.curriedDrawTrainRoad(
       graphics,
       tileWidth,
+      roadWidth,
       arcRadius
     )
 
@@ -184,7 +185,9 @@ class TileModel {
         this.counterclockwise(mirrorX, mirrorY, axis)
       )
     } else {
-      const lineEndWithoutArc = makePoint(midTile - midRoad, midTile - midRoad)
+      const xPos =
+        adjacentRoadType != RoadType.Car ? midTile : midTile - midRoad
+      const lineEndWithoutArc = makePoint(xPos, midTile - midRoad)
       graphics.lineTo(lineEndWithoutArc.x, lineEndWithoutArc.y)
     }
   }
@@ -192,6 +195,7 @@ class TileModel {
   private curriedDrawTrainRoad = (
     graphics: Graphics,
     tileWidth: number,
+    roadWidth: number,
     arcRadius: number
   ) => (
     side: RoadSide // the road side to draw
@@ -222,7 +226,11 @@ class TileModel {
         this.counterclockwise(mirrorX, mirrorY, axis)
       )
     } else {
-      const end = makePoint(tileWidth / 2, tileWidth / 2)
+      // don't overlap an adjacent road
+      const xPos = this.isAdjacentSideCarRoad(side)
+        ? tileWidth / 2 - roadWidth / 2
+        : tileWidth / 2
+      const end = makePoint(xPos, tileWidth / 2)
       graphics.lineTo(end.x, end.y)
     }
   }
@@ -345,6 +353,15 @@ class TileModel {
           mirrorX: false,
           mirrorY: curveBottom
         }
+    }
+  }
+
+  private isAdjacentSideCarRoad = (side: RoadSide): boolean => {
+    switch (side) {
+      case (RoadSide.Top, RoadSide.Bottom):
+        return this.left == RoadType.Car || this.right == RoadType.Car
+      default:
+        return this.top == RoadType.Car || this.bottom == RoadType.Car
     }
   }
 }

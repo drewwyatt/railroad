@@ -12,7 +12,7 @@ class Tile {
   private isDragging: boolean = false
 
   constructor() {
-    const model = makeTileModel(12)
+    const model = makeTileModel(9)
     const tileObject = model.makeGraphics(200, 32)
 
     // Will respond to mouse and touch events
