@@ -11,7 +11,9 @@ enum RoadSide {
 class TileGraphics {
   tileWidth: number
   roadWidth: number
-  arcRadius: number
+
+  tileCornerRadius: number = 20
+  roadArcRadius: number = 20
 
   roadLineWidth: number = 4
   dashLineWidth: number = 2
@@ -20,10 +22,9 @@ class TileGraphics {
   trainDashLength: number = 18
   carDashLength: number = 12
 
-  constructor(tileWidth: number, roadWidth: number, arcRadius?: number) {
+  constructor(tileWidth: number, roadWidth: number) {
     this.tileWidth = tileWidth
     this.roadWidth = roadWidth
-    this.arcRadius = arcRadius || 20
   }
 
   make = (tile: TileModel, existing?: Graphics): Graphics => {
@@ -32,7 +33,13 @@ class TileGraphics {
 
     graphics.lineStyle(this.roadLineWidth, 0x000000, 1.0)
     graphics.beginFill(0xffffff)
-    graphics.drawRoundedRect(0, 0, this.tileWidth, this.tileWidth, 20)
+    graphics.drawRoundedRect(
+      0,
+      0,
+      this.tileWidth,
+      this.tileWidth,
+      this.tileCornerRadius
+    )
     graphics.endFill()
 
     this.drawRoadSegments(tile, graphics)
@@ -187,19 +194,19 @@ class TileGraphics {
     graphics.moveTo(start.x, start.y)
     if (!tile.blocked && adjacentRoadType == RoadType.Car) {
       const arcStart = makePoint(
-        midTile - midRoad - this.arcRadius,
+        midTile - midRoad - this.roadArcRadius,
         midTile - midRoad
       )
       const arcCenter = makePoint(
-        midTile - midRoad - this.arcRadius,
-        midTile - midRoad - this.arcRadius
+        midTile - midRoad - this.roadArcRadius,
+        midTile - midRoad - this.roadArcRadius
       )
 
       graphics.lineTo(arcStart.x, arcStart.y)
       graphics.arc(
         arcCenter.x,
         arcCenter.y,
-        this.arcRadius,
+        this.roadArcRadius,
         this.startAngle(mirrorX, mirrorY, axis),
         this.endAngle(mirrorX, mirrorY),
         this.counterclockwise(mirrorX, mirrorY, axis)
@@ -271,19 +278,19 @@ class TileGraphics {
     graphics.moveTo(start.x, start.y)
     if (curve) {
       const arcStart = makePoint(
-        this.tileWidth / 2 - this.arcRadius,
+        this.tileWidth / 2 - this.roadArcRadius,
         this.tileWidth / 2
       )
       const arcCenter = makePoint(
-        this.tileWidth / 2 - this.arcRadius,
-        this.tileWidth / 2 - this.arcRadius
+        this.tileWidth / 2 - this.roadArcRadius,
+        this.tileWidth / 2 - this.roadArcRadius
       )
 
       graphics.lineTo(arcStart.x, arcStart.y)
       graphics.arc(
         arcCenter.x,
         arcCenter.y,
-        this.arcRadius,
+        this.roadArcRadius,
         this.startAngle(mirrorX, mirrorY, axis),
         this.endAngle(mirrorX, mirrorY),
         this.counterclockwise(mirrorX, mirrorY, axis)
