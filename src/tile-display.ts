@@ -20,13 +20,21 @@ class TileModel {
   left: RoadType
   blocked: boolean
 
-  constructor() {
-    this.top = RoadType.Train
-    this.right = RoadType.Train
-    this.bottom = RoadType.None
-    this.left = RoadType.None
-    this.blocked = false
+  constructor(
+    top: RoadType,
+    right: RoadType,
+    bottom: RoadType,
+    left: RoadType,
+    blocked: boolean
+  ) {
+    this.top = top
+    this.right = right
+    this.bottom = bottom
+    this.left = left
+    this.blocked = blocked
   }
+
+  // MARK: - Public
 
   makeGraphics = (tileWidth: number, roadWidth: number): DisplayObject => {
     const graphics = new Graphics()
@@ -128,8 +136,8 @@ class TileModel {
         drawCarRoadSegment(this.bottom, true, true, RoadAxis.LeftRight)
         break
       case RoadSide.Bottom:
-        drawCarRoadSegment(this.top, true, true, RoadAxis.TopBottom)
-        drawCarRoadSegment(this.bottom, false, true, RoadAxis.TopBottom)
+        drawCarRoadSegment(this.left, false, true, RoadAxis.TopBottom)
+        drawCarRoadSegment(this.right, true, true, RoadAxis.TopBottom)
         break
       case RoadSide.Left:
         drawCarRoadSegment(this.top, false, false, RoadAxis.LeftRight)
@@ -346,4 +354,4 @@ enum RoadAxis {
   TopBottom
 }
 
-export default TileModel
+export { TileModel, RoadType }
