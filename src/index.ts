@@ -9,10 +9,7 @@ const addToFrame = (a: Application) => {
 const resize = (a: Application) => {
   const parent = a.view.parentNode
   if (parent) {
-    a.renderer.resize(
-      (parent as Element).clientWidth,
-      (parent as Element).clientHeight
-    )
+    a.renderer.resize((parent as Element).clientWidth, (parent as Element).clientHeight)
   }
 }
 
