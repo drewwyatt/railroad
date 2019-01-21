@@ -1,35 +1,40 @@
-import { Application, interaction, Graphics } from 'pixi.js'
-import Tile, { InteractionContext } from './tile'
+import { Application, Graphics } from 'pixi.js'
+import Tile from './tile'
 import { toBoard } from './board'
+import MovementManager from './movement-manager'
 import { toStartArea } from './start-area'
-import { centerIn, rectsAreIntersecting } from './utils'
+import { centerIn } from './utils'
 
 export const toApp = (): Application => {
   return new Application(0, 0, { backgroundColor: 0x1099bb })
 }
 
-const positionSpriteInContainersBasedOnCollision = (containers: Graphics[]) => (
-  _: interaction.InteractionEvent,
-  context: InteractionContext
-) => {
-  const { sprite, startPosition } = context
-  const intersectingContainer = containers.find(c => rectsAreIntersecting(c, sprite))
-  if (intersectingContainer) {
-    console.log('found intersecting container')
-    // Drop it in the middle of the container
-    centerIn(intersectingContainer, sprite)
-  } else if (startPosition) {
-    console.log('nope')
-    // Move it bacl
-    sprite.position.set(startPosition.x, startPosition.y)
-  }
-}
+// const positionSpriteInContainersBasedOnCollision = (containers: Graphics[]) => (
+//   _: interaction.InteractionEvent,
+//   context: InteractionContext
+// ) => {
+//   const { sprite, startPosition } = context
+//   const intersectingContainer = containers.find(c => rectsAreIntersecting(c, sprite))
+//   if (intersectingContainer) {
+//     console.log('found intersecting container')
+//     // Drop it in the middle of the container
+//     centerIn(intersectingContainer, sprite)
+//   } else if (startPosition) {
+//     console.log('nope')
+//     // Move it bacl
+//     sprite.position.set(startPosition.x, startPosition.y)
+//   }
+// }
 
 export const setupApp = (app: Application): void => {
+  const movementManager = new MovementManager()
+
   // Create elements
   const startArea = toStartArea()
   const board = toBoard()
-  const tile = new Tile(app.stage)
+  const tile = new Tile()
+
+  movementManager.add(tile.sprite)
 
   // Add them to stage
   app.stage.addChild(startArea)
@@ -44,7 +49,4 @@ export const setupApp = (app: Application): void => {
 
   // Position tile in starting area
   centerIn(startArea as Graphics, tile.sprite)
-
-  // Attach handler
-  tile.onDragEnd = positionSpriteInContainersBasedOnCollision([startArea as Graphics, board as Graphics])
 }
