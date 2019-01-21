@@ -1,53 +1,67 @@
-import { Texture, SCALE_MODES, Sprite, interaction } from 'pixi.js'
+import { interaction, Point, DisplayObject } from 'pixi.js'
+import TileModel from './tile-display'
+
+// enum RoadPosition {
+//   Top, Right, Bottom, Left
+// }
 
 class Tile {
-  sprite: Sprite
+  tileObject: DisplayObject
   private interactionData: interaction.InteractionData | null = null
+  private deltaDragPoint = new Point(0, 0)
   private isDragging: boolean = false
 
-  constructor(imageUrl: string) {
-    const texture = Texture.fromImage(imageUrl)
-    texture.baseTexture.scaleMode = SCALE_MODES.NEAREST
-    const sprite = new Sprite(texture)
+  constructor() {
+    const model = new TileModel()
+    const tileObject = model.makeGraphics(400, 62)
 
     // Will respond to mouse and touch events
-    sprite.interactive = true
+    tileObject.interactive = true
 
     // the hand cursor appears when you hover with your mouse
-    sprite.buttonMode = true
+    tileObject.buttonMode = true
 
-    // anchor point is in center
-    sprite.anchor.set(0.5)
-
-    // make the giant demo image smaller
-    sprite.scale.set(0.25)
-
-    sprite
+    tileObject
       .on('pointerdown', this.onDragStart)
       .on('pointerup', this.onDragEnd)
       .on('pointerupoutside', this.onDragEnd)
       .on('pointermove', this.onDragMove)
 
-    this.sprite = sprite
+    tileObject.x = 20
+    tileObject.y = 20
+    this.tileObject = tileObject
   }
 
   private onDragStart = (e: interaction.InteractionEvent) => {
     this.interactionData = e.data
-    this.sprite.alpha = 0.5
+    const position = this.interactionData.getLocalPosition(
+      this.tileObject.parent
+    )
+    this.deltaDragPoint = new Point(
+      position.x - this.tileObject.x,
+      position.y - this.tileObject.y
+    )
+    console.log(this.deltaDragPoint)
+    this.tileObject.alpha = 0.5
     this.isDragging = true
   }
 
-  private onDragEnd = (_: interaction.InteractionEvent) => {
-    this.sprite.alpha = 1
+  private onDragEnd = () => {
+    this.tileObject.alpha = 1
     this.isDragging = false
     this.interactionData = null
   }
 
-  private onDragMove = (_: interaction.InteractionEvent) => {
+  private onDragMove = () => {
     if (this.isDragging && this.interactionData) {
-      const { x, y } = this.interactionData.getLocalPosition(this.sprite.parent)
-      this.sprite.x = x
-      this.sprite.y = y
+      const tileWidth = 400
+      const { x, y } = this.interactionData.getLocalPosition(
+        this.tileObject.parent
+      )
+      this.tileObject.x =
+        Math.round((x - this.deltaDragPoint.x) / tileWidth) * tileWidth
+      this.tileObject.y =
+        Math.round((y - this.deltaDragPoint.y) / tileWidth) * tileWidth
     }
   }
 }
