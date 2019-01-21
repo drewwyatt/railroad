@@ -57,6 +57,15 @@ class TileModel {
       this.bottom = oldTop
     }
   }
+
+  anyRoadsAreCars = (): boolean => {
+    return (
+      this.top == RoadType.Car ||
+      this.right == RoadType.Car ||
+      this.bottom == RoadType.Car ||
+      this.left == RoadType.Car
+    )
+  }
 }
 
 export { TileModel, RoadType, RoadAxis }

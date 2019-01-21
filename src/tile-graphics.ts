@@ -13,6 +13,9 @@ class TileGraphics {
   roadWidth: number
   arcRadius: number
 
+  roadLineWidth: number = 4
+  dashLineWidth: number = 2
+
   constructor(tileWidth: number, roadWidth: number, arcRadius?: number) {
     this.tileWidth = tileWidth
     this.roadWidth = roadWidth
@@ -23,13 +26,14 @@ class TileGraphics {
     const graphics = existing || new Graphics()
     graphics.clear()
 
-    graphics.lineStyle(4, 0x000000, 1.0)
+    graphics.lineStyle(this.roadLineWidth, 0x000000, 1.0)
     graphics.beginFill(0xffffff)
     graphics.drawRoundedRect(0, 0, this.tileWidth, this.tileWidth, 20)
     graphics.endFill()
 
     this.drawRoadSegments(tile, graphics)
-    this.drawCenter(tile, graphics)
+    this.drawCenterCrossIfNecessary(tile, graphics)
+    this.drawCenterBlockIfNecessary(tile, graphics)
 
     return graphics
   }
@@ -65,18 +69,20 @@ class TileGraphics {
     }
   }
 
-  private drawCenter = (tile: TileModel, graphics: Graphics) => {
-    if (tile.blocked) {
-      const padding = 4
-      graphics.beginFill(0x000000)
-      graphics.drawRect(
-        this.tileWidth / 2 - this.roadWidth / 2 - padding,
-        this.tileWidth / 2 - this.roadWidth / 2 - padding,
-        this.roadWidth + padding * 2,
-        this.roadWidth + padding * 2
-      )
-      graphics.endFill()
-    }
+  private drawCenterBlockIfNecessary = (
+    tile: TileModel,
+    graphics: Graphics
+  ) => {
+    if (!tile.blocked) return
+    const padding = 4
+    graphics.beginFill(0x000000)
+    graphics.drawRect(
+      this.tileWidth / 2 - this.roadWidth / 2 - padding,
+      this.tileWidth / 2 - this.roadWidth / 2 - padding,
+      this.roadWidth + padding * 2,
+      this.roadWidth + padding * 2
+    )
+    graphics.endFill()
   }
 
   private curriedDrawCarRoad = (tile: TileModel, graphics: Graphics) => (
@@ -236,7 +242,7 @@ class TileGraphics {
 
     const dashLength = 10
     let currentX = 0
-    graphics.lineStyle(2, 0x000000, 1.0)
+    graphics.lineStyle(this.dashLineWidth, 0x000000, 1.0)
     while (currentX < midTile) {
       currentX += dashLength
       let nextPoint = makePoint(currentX, midTile)
@@ -245,7 +251,7 @@ class TileGraphics {
       nextPoint = makePoint(currentX, midTile)
       graphics.moveTo(nextPoint.x, nextPoint.y)
     }
-    graphics.lineStyle(4, 0x000000, 1.0)
+    graphics.lineStyle(this.roadLineWidth, 0x000000, 1.0)
   }
 
   private curriedDrawTrainRoad = (tile: TileModel, graphics: Graphics) => (
@@ -288,10 +294,14 @@ class TileGraphics {
       graphics.lineTo(end.x, end.y)
     }
 
-    this.drawTrainDashes(graphics, side)
+    this.drawTrainDashes(tile, graphics, side)
   }
 
-  private drawTrainDashes = (graphics: Graphics, side: RoadSide) => {
+  private drawTrainDashes = (
+    tile: TileModel,
+    graphics: Graphics,
+    side: RoadSide
+  ) => {
     const axis =
       side == RoadSide.Left || side == RoadSide.Right
         ? RoadAxis.LeftRight
@@ -304,17 +314,46 @@ class TileGraphics {
 
     const spacing = 14
     const dashLength = 20
+    const end = tile.anyRoadsAreCars()
+      ? midTile - this.roadWidth / 2
+      : midTile - spacing
     let currentX = spacing
 
-    graphics.lineStyle(2, 0x000000, 1.0)
-    while (currentX < midTile - this.roadWidth / 2) {
+    graphics.lineStyle(this.dashLineWidth, 0x000000, 1.0)
+    while (currentX < end) {
       let point = makePoint(currentX, midTile - dashLength / 2)
       graphics.moveTo(point.x, point.y)
       point = makePoint(currentX, midTile + dashLength / 2)
       graphics.lineTo(point.x, point.y)
       currentX += spacing
     }
-    graphics.lineStyle(4, 0x000000, 1.0)
+    graphics.lineStyle(this.roadLineWidth, 0x000000, 1.0)
+  }
+
+  private drawCenterCrossIfNecessary = (
+    tile: TileModel,
+    graphics: Graphics
+  ) => {
+    if (tile.blocked || tile.anyRoadsAreCars()) {
+      return
+    }
+
+    let trainCount = 0
+    if (tile.top == RoadType.Train) trainCount++
+    if (tile.right == RoadType.Train) trainCount++
+    if (tile.bottom == RoadType.Train) trainCount++
+    if (tile.left == RoadType.Train) trainCount++
+    if (trainCount >= 3) {
+      // if any two adjacent sides are trains, draw this cross
+      const centerOffset = 8
+      const midTile = this.tileWidth / 2
+      graphics.lineStyle(this.dashLineWidth, 0x000000, 1.0)
+      graphics.moveTo(midTile - centerOffset, midTile - centerOffset)
+      graphics.lineTo(midTile + centerOffset, midTile + centerOffset)
+      graphics.moveTo(midTile + centerOffset, midTile - centerOffset)
+      graphics.lineTo(midTile - centerOffset, midTile + centerOffset)
+      graphics.lineStyle(this.roadLineWidth, 0x000000, 1.0)
+    }
   }
 
   private curriedMakePoint = (
