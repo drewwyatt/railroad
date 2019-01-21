@@ -1,12 +1,26 @@
 import { Texture, SCALE_MODES, Sprite, interaction, Container } from 'pixi.js'
 
+type Coords = { x: number; y: number }
+
+export type InteractionHandler = (
+  e: interaction.InteractionEvent,
+  context: InteractionContext
+) => void
+
+export type InteractionContext = {
+  sprite: Sprite
+  startContainer?: Container
+  startPosition?: Coords
+}
+
 class Tile {
   sprite: Sprite
   private interactionData: interaction.InteractionData | null = null
   private isDragging: boolean = false
-  private allowedContainers: Container[] = []
+  private startPosition?: Coords
+  private startContainer?: Container
 
-  constructor(imageUrl: string) {
+  constructor(imageUrl: string, private stage: Container) {
     const texture = Texture.fromImage(imageUrl)
     texture.baseTexture.scaleMode = SCALE_MODES.NEAREST
     const sprite = new Sprite(texture)
@@ -24,55 +38,58 @@ class Tile {
     sprite.scale.set(0.25)
 
     sprite
-      .on('pointerdown', this.onDragStart)
-      .on('pointerup', this.onDragEnd)
-      .on('pointerupoutside', this.onDragEnd)
-      .on('pointermove', this.onDragMove)
+      .on('pointerdown', this._onDragStart)
+      .on('pointerup', this._onDragEnd)
+      .on('pointerupoutside', this._onDragEnd)
+      .on('pointermove', this._onDragMove)
 
     this.sprite = sprite
   }
 
-  setAllowedContainers = (containers: Container[]) => {
-    this.allowedContainers = containers
-  }
+  onDragStart: InteractionHandler | null = null
+  onDragEnd: InteractionHandler | null = null
+  onDragMove: InteractionHandler | null = null
 
-  isColliding = (el: Container): boolean => {
-    const { x: x1, y: y1, width: width1, height: height1 } = this.sprite
-    const { x: x2, y: y2, width: width2, height: height2 } = el
-
-    return (
-      x1 < x2 + width2 &&
-      x1 + width1 > x2 &&
-      y1 < y2 + height2 &&
-      y1 + height1 > y2
-    )
-  }
-
-  private onDragStart = (e: interaction.InteractionEvent) => {
-    this.interactionData = e.data
-    this.sprite.alpha = 0.5
-    this.isDragging = true
-  }
-
-  private onDragEnd = (_: interaction.InteractionEvent) => {
-    this.sprite.alpha = 1
-    this.isDragging = false
-    this.interactionData = null
-    const newParent = this.allowedContainers.find(this.isColliding)
-    if (newParent) {
-      console.log('adding to new parent')
-      newParent.addChild(this.sprite)
-    } else {
-      console.log('no collisions')
+  private tryCallHandler = (
+    handler: InteractionHandler | null,
+    e: interaction.InteractionEvent
+  ) => {
+    if (handler) {
+      const { sprite, startContainer, startPosition } = this
+      handler(e, { sprite, startContainer, startPosition })
     }
   }
 
-  private onDragMove = (_: interaction.InteractionEvent) => {
+  private _onDragStart = (e: interaction.InteractionEvent) => {
+    this.interactionData = e.data
+    this.sprite.alpha = 0.5
+    this.isDragging = true
+    const { x, y } = this.sprite
+    this.startPosition = { x, y }
+    this.startContainer = this.sprite.parent
+
+    this.sprite.setParent(this.stage)
+    this.tryCallHandler(this.onDragStart, e)
+  }
+
+  private _onDragEnd = (e: interaction.InteractionEvent) => {
+    this.isDragging = false
+
+    this.tryCallHandler(this.onDragEnd, e)
+    this.interactionData = null
+    this.startContainer = undefined
+    this.startPosition = undefined
+    this.sprite.alpha = 1
+  }
+
+  private _onDragMove = (e: interaction.InteractionEvent) => {
     if (this.isDragging && this.interactionData) {
       const { x, y } = this.interactionData.getLocalPosition(this.sprite.parent)
       this.sprite.x = x
       this.sprite.y = y
     }
+
+    this.tryCallHandler(this.onDragMove, e)
   }
 }
 

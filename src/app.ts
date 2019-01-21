@@ -1,24 +1,60 @@
-import { Application, Graphics } from 'pixi.js'
-import Tile from './tile'
+import { Application, Container, Sprite, interaction } from 'pixi.js'
+import Tile, { InteractionContext } from './tile'
+import { toBoard } from './board'
+import { toStartArea } from './start-area'
+import { rectsAreIntersecting } from './utils'
 
-const tileBank = new Graphics()
-  .beginFill(0xffff00)
-  .lineStyle(5, 0xff0000)
-  .drawRect(100, 100, 200, 200)
+export const toApp = (): Application => {
+  return new Application(0, 0, { backgroundColor: 0x1099bb })
+}
 
-const grid = new Graphics()
-  .beginFill(0x00ffff)
-  .lineStyle(5, 0xff0000)
-  .drawRect(500, 500, 200, 200)
+const calcCenter = (axis: 'width' | 'height') => (
+  container: Container,
+  sprite: Sprite
+): number => container[axis] / 2 - sprite[axis] / 2
 
-const tile = new Tile('/intersection.png')
+const centerX = calcCenter('width')
+const centerY = calcCenter('height')
 
-tile.setAllowedContainers([tileBank, grid])
+const centerIn = (container: Container, sprite: Sprite) =>
+  sprite.position.set(centerX(container, sprite), centerY(container, sprite))
 
-const app = new Application(0, 0, { backgroundColor: 0x1099bb })
+const positionSpriteInContainersBasedOnCollision = (
+  containers: Container[]
+) => (_: interaction.InteractionEvent, context: InteractionContext) => {
+  const { sprite, startPosition } = context
+  const intersectingContainer = containers.find(c =>
+    rectsAreIntersecting(c, sprite)
+  )
+  if (intersectingContainer) {
+    console.log('found intersecting container')
+    // Drop it in the middle of the container
+    centerIn(intersectingContainer, sprite)
+  } else if (startPosition) {
+    console.log('nope')
+    // Move it bacl
+    sprite.position.set(startPosition.x, startPosition.y)
+  }
+}
 
-app.stage.addChild(tileBank)
-app.stage.addChild(grid)
-app.stage.addChild(tile.sprite)
+export const setupApp = (app: Application): void => {
+  // Create elements
+  const startArea = toStartArea()
+  const board = toBoard()
+  const tile = new Tile('/intersection.png', app.stage)
 
-export default app
+  // Add them to stage
+  app.stage.addChild(startArea)
+  app.stage.addChild(board)
+
+  startArea.addChild(tile.sprite)
+
+  // Position tile in starting area
+  centerIn(startArea, tile.sprite)
+
+  // Attach handler
+  tile.onDragEnd = positionSpriteInContainersBasedOnCollision([
+    startArea,
+    board
+  ])
+}
