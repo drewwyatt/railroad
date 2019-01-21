@@ -83,7 +83,6 @@ class TileModel {
     if (!this.blocked && adjacentRoadType == RoadType.Car) {
       const arcStart = makePoint(midTile - midRoad - arcRadius, midTile - midRoad)
       const arcCenter = makePoint(midTile - midRoad - arcRadius, midTile - midRoad - arcRadius)
-      const counterclockwise = (!mirrorX && axis == RoadAxis.LeftRight) || (mirrorX && axis == RoadAxis.TopBottom)
 
       graphics.lineTo(arcStart.x, arcStart.y)
       graphics.arc(
@@ -91,8 +90,8 @@ class TileModel {
         arcCenter.y,
         arcRadius,
         this.startAngle(mirrorX, mirrorY, axis),
-        this.endAngle(mirrorX, mirrorY, axis),
-        counterclockwise
+        this.endAngle(mirrorX, mirrorY),
+        this.counterclockwise(mirrorX, mirrorY, axis)
       )
     } else {
       const lineEndWithoutArc = makePoint(midTile - midRoad, midTile - midRoad)
@@ -118,15 +117,27 @@ class TileModel {
     }
   }
 
-  private endAngle = (mirrorX: boolean, mirrorY: boolean, axis: RoadAxis): number => {
-    if (axis == RoadAxis.LeftRight && !mirrorY) {
-      return 0
-    } else if (axis == RoadAxis.LeftRight && mirrorY) {
-      return Math.PI
-    } else if (axis == RoadAxis.TopBottom && !mirrorX) {
-      return Math.PI / 2
+  private endAngle = (mirrorX: boolean, mirrorY: boolean): number => {
+    if (!mirrorX && !mirrorY) {
+      // top left
+      return Math.PI / 4
+    } else if (!mirrorX && mirrorY) {
+      // bottom left
+      return 7 * Math.PI / 4
+    } else if (mirrorX && !mirrorY) {
+      // top right
+      return 3 * Math.PI / 4
     } else {
-      return 3 * Math.PI / 2
+      // bottom right
+      return 5 * Math.PI / 4
+    }
+  }
+
+  private counterclockwise = (mirrorX: boolean, mirrorY: boolean, axis: RoadAxis): boolean => {
+    if ((!mirrorX && !mirrorY) || (mirrorX && mirrorY)) {
+      return (axis == RoadAxis.LeftRight)
+    } else {
+      return (axis == RoadAxis.TopBottom)
     }
   }
 }
@@ -135,7 +146,5 @@ enum RoadAxis {
   LeftRight,
   TopBottom
 }
-
-
 
 export default TileModel
