@@ -58,11 +58,13 @@ class Tile {
     this.sprite.alpha = 1
     this.isDragging = false
     this.interactionData = null
-    console.log('Checking collisions...')
-    this.allowedContainers.forEach((el, idx) => {
-      console.log(`Colliding with el ${idx}?:`, this.isColliding(el))
-    })
-    console.log('Collision check complete.')
+    const newParent = this.allowedContainers.find(this.isColliding)
+    if (newParent) {
+      console.log('adding to new parent')
+      newParent.addChild(this.sprite)
+    } else {
+      console.log('no collisions')
+    }
   }
 
   private onDragMove = (_: interaction.InteractionEvent) => {
