@@ -2,84 +2,61 @@ import { interaction, Point, Graphics } from 'pixi.js'
 import makeTileModel from './tile-model-factory'
 import TileGraphics from './tile-graphics'
 
-// enum RoadPosition {
-//   Top, Right, Bottom, Left
-// }
-
 class Tile {
-  tileObjects: Graphics[]
+  sprite: Graphics
   private interactionData: interaction.InteractionData | null = null
   private deltaDragPoint = new Point(0, 0)
   private isDragging: boolean = false
 
   constructor() {
     const width = 180
-    const spacing = 20
-    const rowCount = 4
     const tileGraphics = new TileGraphics(width, 32)
-    let tileObjects: Graphics[] = []
 
-    for (let i = 0; i < 15; i++) {
-      const model = makeTileModel(i)
-      const tileObject = tileGraphics.make(model)
-      tileObject.x = (i % rowCount) * (width + spacing) + spacing
-      tileObject.y = Math.floor(i / rowCount) * (width + spacing) + spacing
-      tileObjects.push(tileObject)
-    }
+    const model = makeTileModel(0)
+    const sprite = tileGraphics.make(model)
 
-    // const model = makeTileModel(6)
+    // Will respond to mouse and touch events
+    sprite.interactive = true
 
-    // const tileObject = tileGraphics.make(model)
+    // the hand cursor appears when you hover with your mouse
+    sprite.buttonMode = true
 
-    // // Will respond to mouse and touch events
-    // tileObject.interactive = true
+    sprite
+      .on('pointerdown', this.onDragStart)
+      .on('pointerup', this.onDragEnd)
+      .on('pointerupoutside', this.onDragEnd)
+      .on('pointermove', this.onDragMove)
 
-    // // the hand cursor appears when you hover with your mouse
-    // tileObject.buttonMode = true
-
-    // tileObject
-    //   .on('pointerdown', this.onDragStart)
-    //   .on('pointerup', this.onDragEnd)
-    //   .on('pointerupoutside', this.onDragEnd)
-    //   .on('pointermove', this.onDragMove)
-
-    // tileObject.x = 20
-    // tileObject.y = 20
-    this.tileObjects = tileObjects
+    sprite.x = 20
+    sprite.y = 20
+    this.sprite = sprite
   }
 
-  // private onDragStart = (e: interaction.InteractionEvent) => {
-  //   this.interactionData = e.data
-  //   const position = this.interactionData.getLocalPosition(
-  //     this.tileObject.parent
-  //   )
-  //   this.deltaDragPoint = new Point(
-  //     position.x - this.tileObject.x,
-  //     position.y - this.tileObject.y
-  //   )
-  //   console.log(this.deltaDragPoint)
-  //   this.tileObject.alpha = 0.5
-  //   this.isDragging = true
-  // }
+  private onDragStart = (e: interaction.InteractionEvent) => {
+    this.interactionData = e.data
+    const position = this.interactionData.getLocalPosition(this.sprite.parent)
+    this.deltaDragPoint = new Point(
+      position.x - this.sprite.x,
+      position.y - this.sprite.y
+    )
+    console.log(this.deltaDragPoint)
+    this.sprite.alpha = 0.5
+    this.isDragging = true
+  }
 
-  // private onDragEnd = () => {
-  //   this.tileObject.alpha = 1
-  //   this.isDragging = false
-  //   this.interactionData = null
-  // }
+  private onDragEnd = () => {
+    this.sprite.alpha = 1
+    this.isDragging = false
+    this.interactionData = null
+  }
 
-  // private onDragMove = () => {
-  //   if (this.isDragging && this.interactionData) {
-  //     const tileWidth = 400
-  //     const { x, y } = this.interactionData.getLocalPosition(
-  //       this.tileObject.parent
-  //     )
-  //     this.tileObject.x =
-  //       Math.round((x - this.deltaDragPoint.x) / tileWidth) * tileWidth
-  //     this.tileObject.y =
-  //       Math.round((y - this.deltaDragPoint.y) / tileWidth) * tileWidth
-  //   }
-  // }
+  private onDragMove = () => {
+    if (this.isDragging && this.interactionData) {
+      const { x, y } = this.interactionData.getLocalPosition(this.sprite.parent)
+      this.sprite.x = x - this.deltaDragPoint.x
+      this.sprite.y = y - this.deltaDragPoint.y
+    }
+  }
 }
 
 export default Tile
