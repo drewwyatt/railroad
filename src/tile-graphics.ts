@@ -16,6 +16,10 @@ class TileGraphics {
   roadLineWidth: number = 4
   dashLineWidth: number = 2
 
+  trainDashSpacing: number = 16
+  trainDashLength: number = 18
+  carDashLength: number = 12
+
   constructor(tileWidth: number, roadWidth: number, arcRadius?: number) {
     this.tileWidth = tileWidth
     this.roadWidth = roadWidth
@@ -163,7 +167,7 @@ class TileGraphics {
         )
         break
     }
-    this.drawRoadDashes(graphics, side)
+    this.drawCarRoadDashes(graphics, side)
   }
 
   private curriedDrawCarRoadSegment = (tile: TileModel, graphics: Graphics) => (
@@ -226,7 +230,7 @@ class TileGraphics {
     }
   }
 
-  private drawRoadDashes = (graphics: Graphics, side: RoadSide) => {
+  private drawCarRoadDashes = (graphics: Graphics, side: RoadSide) => {
     const axis =
       side == RoadSide.Left || side == RoadSide.Right
         ? RoadAxis.LeftRight
@@ -240,14 +244,13 @@ class TileGraphics {
     const start = makePoint(0, midTile)
     graphics.moveTo(start.x, start.y)
 
-    const dashLength = 10
     let currentX = 0
     graphics.lineStyle(this.dashLineWidth, 0x000000, 1.0)
     while (currentX < midTile) {
-      currentX += dashLength
+      currentX += this.carDashLength
       let nextPoint = makePoint(currentX, midTile)
       graphics.lineTo(nextPoint.x, nextPoint.y)
-      currentX += dashLength
+      currentX += this.carDashLength
       nextPoint = makePoint(currentX, midTile)
       graphics.moveTo(nextPoint.x, nextPoint.y)
     }
@@ -312,30 +315,30 @@ class TileGraphics {
     const makePoint = this.curriedMakePoint(mirrorX, mirrorY, axis)
     const midTile = this.tileWidth / 2
 
-    const spacing = 14
-    const dashLength = 20
-    const end = tile.anyRoadsAreCars()
-      ? midTile - this.roadWidth / 2
-      : midTile - spacing
-    let currentX = spacing
+    let end = 0
+    if (tile.anyRoadsAreCars()) {
+      end = midTile - this.roadWidth / 2
+    } else if (this.shouldDrawCross(tile)) {
+      end = midTile - this.trainDashSpacing
+    } else {
+      end = midTile
+    }
+    let currentX = this.trainDashSpacing
 
     graphics.lineStyle(this.dashLineWidth, 0x000000, 1.0)
     while (currentX < end) {
-      let point = makePoint(currentX, midTile - dashLength / 2)
+      let point = makePoint(currentX, midTile - this.trainDashLength / 2)
       graphics.moveTo(point.x, point.y)
-      point = makePoint(currentX, midTile + dashLength / 2)
+      point = makePoint(currentX, midTile + this.trainDashLength / 2)
       graphics.lineTo(point.x, point.y)
-      currentX += spacing
+      currentX += this.trainDashSpacing
     }
     graphics.lineStyle(this.roadLineWidth, 0x000000, 1.0)
   }
 
-  private drawCenterCrossIfNecessary = (
-    tile: TileModel,
-    graphics: Graphics
-  ) => {
+  private shouldDrawCross = (tile: TileModel): boolean => {
     if (tile.blocked || tile.anyRoadsAreCars()) {
-      return
+      return false
     }
 
     let trainCount = 0
@@ -343,17 +346,23 @@ class TileGraphics {
     if (tile.right == RoadType.Train) trainCount++
     if (tile.bottom == RoadType.Train) trainCount++
     if (tile.left == RoadType.Train) trainCount++
-    if (trainCount >= 3) {
-      // if any two adjacent sides are trains, draw this cross
-      const centerOffset = 8
-      const midTile = this.tileWidth / 2
-      graphics.lineStyle(this.dashLineWidth, 0x000000, 1.0)
-      graphics.moveTo(midTile - centerOffset, midTile - centerOffset)
-      graphics.lineTo(midTile + centerOffset, midTile + centerOffset)
-      graphics.moveTo(midTile + centerOffset, midTile - centerOffset)
-      graphics.lineTo(midTile - centerOffset, midTile + centerOffset)
-      graphics.lineStyle(this.roadLineWidth, 0x000000, 1.0)
-    }
+    return trainCount >= 3
+  }
+
+  private drawCenterCrossIfNecessary = (
+    tile: TileModel,
+    graphics: Graphics
+  ) => {
+    if (!this.shouldDrawCross(tile)) return
+
+    const centerOffset = 8
+    const midTile = this.tileWidth / 2
+    graphics.lineStyle(this.dashLineWidth, 0x000000, 1.0)
+    graphics.moveTo(midTile - centerOffset, midTile - centerOffset)
+    graphics.lineTo(midTile + centerOffset, midTile + centerOffset)
+    graphics.moveTo(midTile + centerOffset, midTile - centerOffset)
+    graphics.lineTo(midTile - centerOffset, midTile + centerOffset)
+    graphics.lineStyle(this.roadLineWidth, 0x000000, 1.0)
   }
 
   private curriedMakePoint = (
