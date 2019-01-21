@@ -1,5 +1,6 @@
 import { interaction, Point, DisplayObject } from 'pixi.js'
 import makeTileModel from './tile-model-factory'
+import TileGraphics from './tile-graphics'
 
 // enum RoadPosition {
 //   Top, Right, Bottom, Left
@@ -13,7 +14,8 @@ class Tile {
 
   constructor() {
     const model = makeTileModel(9)
-    const tileObject = model.makeGraphics(200, 32)
+    const tileGraphics = new TileGraphics(200, 32)
+    const tileObject = tileGraphics.make(model)
 
     // Will respond to mouse and touch events
     tileObject.interactive = true
