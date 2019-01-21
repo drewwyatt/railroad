@@ -1,4 +1,4 @@
-import { DisplayObject, Graphics, Point } from 'pixi.js'
+import { Graphics, Point } from 'pixi.js'
 
 enum RoadSide {
   Top,
@@ -36,8 +36,13 @@ class TileModel {
 
   // MARK: - Public
 
-  makeGraphics = (tileWidth: number, roadWidth: number): DisplayObject => {
-    const graphics = new Graphics()
+  makeGraphics = (
+    tileWidth: number,
+    roadWidth: number,
+    existing?: Graphics
+  ): Graphics => {
+    const graphics = existing || new Graphics()
+    graphics.clear()
 
     graphics.lineStyle(4, 0x000000, 1.0)
     graphics.beginFill(0xffffff)
@@ -129,20 +134,76 @@ class TileModel {
     )
     switch (side) {
       case RoadSide.Top:
-        drawCarRoadSegment(this.left, false, false, RoadAxis.TopBottom)
-        drawCarRoadSegment(this.right, true, false, RoadAxis.TopBottom)
+        drawCarRoadSegment(
+          this.left,
+          this.bottom,
+          this.right,
+          false,
+          false,
+          RoadAxis.TopBottom
+        )
+        drawCarRoadSegment(
+          this.right,
+          this.bottom,
+          this.left,
+          true,
+          false,
+          RoadAxis.TopBottom
+        )
         break
       case RoadSide.Right:
-        drawCarRoadSegment(this.top, true, false, RoadAxis.LeftRight)
-        drawCarRoadSegment(this.bottom, true, true, RoadAxis.LeftRight)
+        drawCarRoadSegment(
+          this.top,
+          this.left,
+          this.bottom,
+          true,
+          false,
+          RoadAxis.LeftRight
+        )
+        drawCarRoadSegment(
+          this.bottom,
+          this.left,
+          this.top,
+          true,
+          true,
+          RoadAxis.LeftRight
+        )
         break
       case RoadSide.Bottom:
-        drawCarRoadSegment(this.left, false, true, RoadAxis.TopBottom)
-        drawCarRoadSegment(this.right, true, true, RoadAxis.TopBottom)
+        drawCarRoadSegment(
+          this.left,
+          this.top,
+          this.right,
+          false,
+          true,
+          RoadAxis.TopBottom
+        )
+        drawCarRoadSegment(
+          this.right,
+          this.top,
+          this.left,
+          true,
+          true,
+          RoadAxis.TopBottom
+        )
         break
       case RoadSide.Left:
-        drawCarRoadSegment(this.top, false, false, RoadAxis.LeftRight)
-        drawCarRoadSegment(this.bottom, false, true, RoadAxis.LeftRight)
+        drawCarRoadSegment(
+          this.top,
+          this.right,
+          this.bottom,
+          false,
+          false,
+          RoadAxis.LeftRight
+        )
+        drawCarRoadSegment(
+          this.bottom,
+          this.right,
+          this.top,
+          false,
+          true,
+          RoadAxis.LeftRight
+        )
         break
     }
   }
@@ -153,7 +214,9 @@ class TileModel {
     roadWidth: number,
     arcRadius: number
   ) => (
-    adjacentRoadType: RoadType,
+    adjacentRoadType: RoadType, // the road type of the adjacent road
+    oppositeRoadType: RoadType, // the road type of road opposite of the one being drawn
+    oppositeAdjacentRoadType: RoadType, // the road type of the road opposite of the adjacent road
     mirrorX: boolean, // whether the line is being drawn on the left or right side
     mirrorY: boolean, // whether the line is being drawn on the top or bottom side
     axis: RoadAxis // the axis of the road
@@ -189,6 +252,24 @@ class TileModel {
         adjacentRoadType != RoadType.Car ? midTile : midTile - midRoad
       const lineEndWithoutArc = makePoint(xPos, midTile - midRoad)
       graphics.lineTo(lineEndWithoutArc.x, lineEndWithoutArc.y)
+
+      const shouldDrawOuterArc = this.shouldDrawOuterArcForCarRoad(
+        adjacentRoadType,
+        oppositeRoadType,
+        oppositeAdjacentRoadType
+      )
+      if (shouldDrawOuterArc) {
+        const outerMirrorX = axis == RoadAxis.TopBottom ? !mirrorX : mirrorX
+        const outerMirrorY = axis == RoadAxis.LeftRight ? !mirrorY : mirrorY
+        graphics.arc(
+          midTile,
+          midTile,
+          roadWidth / 2,
+          this.startAngle(outerMirrorX, outerMirrorY, axis),
+          this.endAngle(outerMirrorX, outerMirrorY),
+          this.counterclockwise(outerMirrorX, outerMirrorY, axis)
+        )
+      }
     }
   }
 
@@ -363,6 +444,18 @@ class TileModel {
       default:
         return this.top == RoadType.Car || this.bottom == RoadType.Car
     }
+  }
+
+  private shouldDrawOuterArcForCarRoad = (
+    adjacentType: RoadType,
+    oppositeType: RoadType, // the type of road opposite the side being drawn
+    oppositeAdjacentType: RoadType // the type of road opposite the adjacent side
+  ): boolean => {
+    return (
+      adjacentType == RoadType.None &&
+      oppositeType == RoadType.None &&
+      oppositeAdjacentType == RoadType.Car
+    )
   }
 }
 
