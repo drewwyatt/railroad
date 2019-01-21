@@ -16,13 +16,7 @@ class TileModel {
   left: RoadType
   blocked: boolean
 
-  constructor(
-    top: RoadType,
-    right: RoadType,
-    bottom: RoadType,
-    left: RoadType,
-    blocked: boolean
-  ) {
+  constructor(top: RoadType, right: RoadType, bottom: RoadType, left: RoadType, blocked: boolean) {
     this.top = top
     this.right = right
     this.bottom = bottom
@@ -60,10 +54,7 @@ class TileModel {
 
   anyRoadsAreCars = (): boolean => {
     return (
-      this.top == RoadType.Car ||
-      this.right == RoadType.Car ||
-      this.bottom == RoadType.Car ||
-      this.left == RoadType.Car
+      this.top == RoadType.Car || this.right == RoadType.Car || this.bottom == RoadType.Car || this.left == RoadType.Car
     )
   }
 }

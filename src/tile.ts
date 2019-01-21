@@ -35,10 +35,7 @@ class Tile {
   private onDragStart = (e: interaction.InteractionEvent) => {
     this.interactionData = e.data
     const position = this.interactionData.getLocalPosition(this.sprite.parent)
-    this.deltaDragPoint = new Point(
-      position.x - this.sprite.x,
-      position.y - this.sprite.y
-    )
+    this.deltaDragPoint = new Point(position.x - this.sprite.x, position.y - this.sprite.y)
     console.log(this.deltaDragPoint)
     this.sprite.alpha = 0.5
     this.isDragging = true
