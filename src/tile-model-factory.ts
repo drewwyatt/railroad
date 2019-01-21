@@ -1,4 +1,4 @@
-import { TileModel, RoadType } from './tile-display'
+import { TileModel, RoadType } from './tile-model'
 
 const makeTileModel = (id: number): TileModel => {
   switch (id) {
